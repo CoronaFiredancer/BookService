@@ -13,107 +13,118 @@ using BookService.Models;
 
 namespace BookService.Controllers
 {
-    public class BooksController : ApiController
-    {
-        private BookServiceContext db = new BookServiceContext();
+	public class BooksController : ApiController
+	{
+		private BookServiceContext db = new BookServiceContext();
 
-        // GET: api/Books
-        public IQueryable<Book> GetBooks()
-        {
-            return db.Books;
-        }
+		// GET: api/Books
+		public IQueryable<BookDto> GetBooks()
+		{
+			//return db.Books;
+			//eager loading
+			//.Include(x => x.Author);
+			var books = from b in db.Books
+				select new BookDto
+				{
+					Id = b.Id,
+					AuthorName = b.Author.Name,
+					Title = b.Title
+				};
 
-        // GET: api/Books/5
-        [ResponseType(typeof(Book))]
-        public async Task<IHttpActionResult> GetBook(int id)
-        {
-            Book book = await db.Books.FindAsync(id);
-            if (book == null)
-            {
-                return NotFound();
-            }
+			return books;
+		}
 
-            return Ok(book);
-        }
+		// GET: api/Books/5
+		[ResponseType(typeof(Book))]
+		public async Task<IHttpActionResult> GetBook(int id)
+		{
+			Book book = await db.Books.FindAsync(id);
+			if (book == null)
+			{
+				return NotFound();
+			}
 
-        // PUT: api/Books/5
-        [ResponseType(typeof(void))]
-        public async Task<IHttpActionResult> PutBook(int id, Book book)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+			return Ok(book);
+		}
 
-            if (id != book.Id)
-            {
-                return BadRequest();
-            }
+		// PUT: api/Books/5
+		[ResponseType(typeof(void))]
+		public async Task<IHttpActionResult> PutBook(int id, Book book)
+		{
+			if (!ModelState.IsValid)
+			{
+				return BadRequest(ModelState);
+			}
 
-            db.Entry(book).State = EntityState.Modified;
+			if (id != book.Id)
+			{
+				return BadRequest();
+			}
 
-            try
-            {
-                await db.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!BookExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+			db.Entry(book).State = EntityState.Modified;
 
-            return StatusCode(HttpStatusCode.NoContent);
-        }
+			try
+			{
+				await db.SaveChangesAsync();
+			}
+			catch (DbUpdateConcurrencyException)
+			{
+				if (!BookExists(id))
+				{
+					return NotFound();
+				}
+				else
+				{
+					throw;
+				}
+			}
 
-        // POST: api/Books
-        [ResponseType(typeof(Book))]
-        public async Task<IHttpActionResult> PostBook(Book book)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+			return StatusCode(HttpStatusCode.NoContent);
+		}
 
-            db.Books.Add(book);
-            await db.SaveChangesAsync();
+		// POST: api/Books
+		[ResponseType(typeof(Book))]
+		public async Task<IHttpActionResult> PostBook(Book book)
+		{
+			if (!ModelState.IsValid)
+			{
+				return BadRequest(ModelState);
+			}
 
-            return CreatedAtRoute("DefaultApi", new { id = book.Id }, book);
-        }
+			db.Books.Add(book);
+			await db.SaveChangesAsync();
 
-        // DELETE: api/Books/5
-        [ResponseType(typeof(Book))]
-        public async Task<IHttpActionResult> DeleteBook(int id)
-        {
-            Book book = await db.Books.FindAsync(id);
-            if (book == null)
-            {
-                return NotFound();
-            }
+			return CreatedAtRoute("DefaultApi", new { id = book.Id }, book);
+		}
 
-            db.Books.Remove(book);
-            await db.SaveChangesAsync();
+		// DELETE: api/Books/5
+		[ResponseType(typeof(Book))]
+		public async Task<IHttpActionResult> DeleteBook(int id)
+		{
+			Book book = await db.Books.FindAsync(id);
+			if (book == null)
+			{
+				return NotFound();
+			}
 
-            return Ok(book);
-        }
+			db.Books.Remove(book);
+			await db.SaveChangesAsync();
 
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                db.Dispose();
-            }
-            base.Dispose(disposing);
-        }
+			return Ok(book);
+		}
 
-        private bool BookExists(int id)
-        {
-            return db.Books.Count(e => e.Id == id) > 0;
-        }
-    }
+		protected override void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				db.Dispose();
+			}
+			base.Dispose(disposing);
+		}
+
+		private bool BookExists(int id)
+		{
+			return db.Books.Count(e => e.Id == id) > 0;
+		}
+	}
 }
