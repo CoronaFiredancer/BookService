@@ -38,7 +38,18 @@ namespace BookService.Controllers
 		[ResponseType(typeof(Book))]
 		public async Task<IHttpActionResult> GetBook(int id)
 		{
-			Book book = await db.Books.FindAsync(id);
+			//Book book = await db.Books.FindAsync(id);
+			var book = await db.Books.Include(b => b.Author).Select(b =>
+				new BookDetailDto
+				{
+					Id = b.Id,
+					AuthorName = b.Author.Name,
+					Genre = b.Genre,
+					Title = b.Title,
+					Year = b.Year,
+					Price = b.Price
+				}).SingleOrDefaultAsync(b => b.Id == id);
+
 			if (book == null)
 			{
 				return NotFound();
@@ -94,7 +105,17 @@ namespace BookService.Controllers
 			db.Books.Add(book);
 			await db.SaveChangesAsync();
 
-			return CreatedAtRoute("DefaultApi", new { id = book.Id }, book);
+			//load author name
+			db.Entry(book).Reference(x => x.Author).Load();
+
+			var dto = new BookDto
+			{
+				Id = book.Id,
+				Title = book.Title,
+				AuthorName = book.Author.Name
+			};
+
+			return CreatedAtRoute("DefaultApi", new { id = book.Id }, dto);
 		}
 
 		// DELETE: api/Books/5
